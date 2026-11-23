@@ -104,18 +104,16 @@ Training saves these files in training/models:
 
 ## Build and run the API
 
-Copy the training artifacts into the serving folder, then build:
+Build from the project root using the checked-in model artifacts in `serving/models/`:
 
 ```powershell
-Copy-Item -Path .\training\models\* -Destination .\serving\models
-
-docker build -t titanic-api:1.0 .\serving
+docker build --platform linux/amd64 -t titanic-api:local .\serving
 ```
 
 Start the API:
 
 ```powershell
-docker run --rm --name titanic-api -p 127.0.0.1:8000:8000 titanic-api:1.0
+docker run --rm --name titanic-api -p 127.0.0.1:8000:8000 titanic-api:local
 ```
 
 Keep the terminal running while using the API. Press Ctrl+C to stop it.
@@ -206,24 +204,20 @@ This is an educational model demonstrating training, containerization, validatio
 
 ## Run the published image
 
-Docker Hub: https://hub.docker.com/r/rithmsai/titanic-api
+Docker Hub publishes `rithmsai/titanic-api:1.1` for `linux/amd64`. The `latest` tag points to the same release, and `1.0` is the original submission. [View Docker Hub tags](https://hub.docker.com/r/rithmsai/titanic-api/tags).
 
-Available tags: `1.0` and `latest`  
-Image platform: `linux/amd64`
-
-The `1.0` tag is the original submitted image. The source-code improvements described above require a new image build; they are not retroactively added to that tag.
+- Release digest: `sha256:ce1a5bb111e6129e21a70b8dee44a23a265e56d10791bb9b6f18e68f5eeacb6e`
+- Source commit: [`a80f232`](https://github.com/rithmsAI/titanic-ml-project/commit/a80f23205de2b0151cbf0fc7014809d370bf7e98)
 
 ```powershell
-docker pull rithmsai/titanic-api:1.0
-
-docker run --rm --name titanic-api-published -p 127.0.0.1:8001:8000 rithmsai/titanic-api:1.0
+docker pull --platform linux/amd64 rithmsai/titanic-api:1.1
+docker run --rm --name titanic-api-published -p 127.0.0.1:8001:8000 rithmsai/titanic-api:1.1
 ```
 
-Keep the terminal running, then open:
+To pin the exact release, use `rithmsai/titanic-api@sha256:ce1a5bb111e6129e21a70b8dee44a23a265e56d10791bb9b6f18e68f5eeacb6e` in place of the version tag.
 
-- Health check: http://127.0.0.1:8001/health
-- Swagger documentation: http://127.0.0.1:8001/docs
+Open [Swagger](http://127.0.0.1:8001/docs) or the [health endpoint](http://127.0.0.1:8001/health). Press Ctrl+C to stop the container.
 
-Press Ctrl+C to stop the container.
+### Release verification
 
-The published image was pulled and tested locally on November 21, 2026. Its health check and single-passenger prediction returned HTTP 200.
+On November 22, 2026, all 57 tests passed in Python 3.11 and all six EDA outputs matched the checked-in results. The Docker Hub pull returned the release digest above. The pulled image loaded the saved model and ran as UID 1000. Single and two-passenger batch predictions returned HTTP 200 with consistent results. A negative age and an empty batch each returned HTTP 422. The built-in Docker health probe reported `healthy`, then `unhealthy` while the server was suspended, and `healthy` after it resumed.
